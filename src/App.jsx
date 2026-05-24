@@ -3,7 +3,7 @@ import { useAppStore } from "./store/useAppStore";
 import Confetti from "./components/Confetti";
 import HomeView from "./views/HomeView";
 import TasksView from "./views/TasksView";
-import CalendarView from "./views/CalendarView";
+import ChallengesView from "./views/ChallengesView";
 import MoneyView from "./views/MoneyView";
 import StatsView from "./views/StatsView";
 import ParentView from "./views/ParentView";
@@ -17,10 +17,15 @@ export default function App() {
   const [confetti, setConfetti] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const { childName, streak, totalPoints, parentPin } = useAppStore();
+  const { childName, streak, totalPoints, parentPin, equippedAvatar, equippedBg } = useAppStore();
 
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => { setLoaded(true); }, []);
+  useEffect(() => { 
+    if (equippedAvatar === "😎") {
+      useAppStore.setState({ equippedAvatar: "/avatar_lia.png" });
+    }
+    setLoaded(true); 
+  }, [equippedAvatar]);
 
   const showToast = (msg, type="success") => {
     setToast({msg, type});
@@ -59,7 +64,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen pb-20 relative font-serif">
+    <div className="min-h-screen pb-20 relative font-sans">
       <Confetti active={confetti} />
 
       {/* Toast */}
@@ -101,13 +106,39 @@ export default function App() {
         
         {/* Header - Only hide on Parent View */}
         {view !== "parent" && (
-          <div className="bg-gradient-to-br from-brand-blue to-brand-blueD rounded-3xl p-5 mb-5 shadow-[0_8px_24px_rgba(59,130,246,0.4)] text-white">
-            <div className="flex justify-between items-start">
+          <div className={`${equippedBg} rounded-3xl p-5 mb-5 shadow-[0_8px_24px_rgba(59,130,246,0.4)] text-white relative overflow-hidden transition-all duration-500`}>
+            <div className="absolute top-0 right-0 p-4 opacity-20 pointer-events-none select-none">
+              {equippedAvatar && (equippedAvatar.includes('.') || equippedAvatar.includes('/')) ? (
+                <img 
+                  src={equippedAvatar.startsWith('http') || equippedAvatar.startsWith('data:') ? equippedAvatar : `${import.meta.env.BASE_URL}${equippedAvatar.replace(/^\//, '')}`} 
+                  alt="Avatar" 
+                  className="w-24 h-24 object-cover rounded-full" 
+                  onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=Lia&background=8B5CF6&color=fff&rounded=true&size=128"; }}
+                />
+              ) : (
+                <span className="text-6xl">{equippedAvatar || '😎'}</span>
+              )}
+            </div>
+            <div className="flex justify-between items-start relative z-10">
               <div>
                 <p className="m-0 text-[13px] opacity-85">
                   {new Date().getHours() < 12 ? "¡Buenos días" : new Date().getHours() < 20 ? "¡Buenas tardes" : "¡Buenas noches"}, {childName}! 👋
                 </p>
-                <h1 className="m-0 mt-0.5 text-[22px] font-bold">Lia's Chores</h1>
+                <h1 className="m-0 mt-0.5 text-[22px] font-bold flex items-center gap-2">
+                  <span className="flex-shrink-0">
+                    {equippedAvatar && (equippedAvatar.includes('.') || equippedAvatar.includes('/')) ? (
+                      <img 
+                        src={equippedAvatar.startsWith('http') || equippedAvatar.startsWith('data:') ? equippedAvatar : `${import.meta.env.BASE_URL}${equippedAvatar.replace(/^\//, '')}`} 
+                        alt="Avatar" 
+                        className="w-8 h-8 object-cover rounded-full border-2 border-white bg-white/20" 
+                        onError={(e) => { e.target.onerror = null; e.target.src = "https://ui-avatars.com/api/?name=Lia&background=8B5CF6&color=fff&rounded=true&size=64"; }}
+                      />
+                    ) : (
+                      equippedAvatar || '😎'
+                    )}
+                  </span>
+                  Tareas de {childName}
+                </h1>
               </div>
               <div className="text-right">
                 <div className={`bg-white/25 rounded-2xl px-3.5 py-1.5 text-[13px] font-bold ${streak >= 3 ? 'animate-pulse-slow' : ''}`}>
@@ -118,8 +149,8 @@ export default function App() {
             
             <div className="mt-4">
               <div className="flex justify-between mb-1.5 text-[13px]">
-                <span className="font-bold">Mis puntos</span>
-                <span className="opacity-85">{totalPoints}⭐</span>
+                <span className="font-bold">Mis puntos acumulados:</span>
+                <span className="font-black text-base">{totalPoints} 🪙</span>
               </div>
             </div>
           </div>
@@ -127,23 +158,23 @@ export default function App() {
 
         {/* Views */}
         {view === "home" && <HomeView fireConfetti={fireConfetti} showToast={showToast} />}
-        {view === "tasks" && <TasksView showToast={showToast} />}
-        {view === "calendar" && <CalendarView />}
-        {view === "money" && <MoneyView fireConfetti={fireConfetti} showToast={showToast} />}
+        {view === "tasks"      && <TasksView showToast={showToast} />}
+        {view === "challenges" && <ChallengesView />}
+        {view === "money"      && <MoneyView fireConfetti={fireConfetti} showToast={showToast} />}
         {view === "stats" && <StatsView />}
         {view === "parent" && parentMode && <ParentView showToast={showToast} />}
 
       </div>
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-[3px] border-brand-blueL flex justify-around py-2 pb-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-[3px] border-brand-blueL flex justify-around py-1.5 pb-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         {[
-          {id:"home",    icon:"🏠", label:"Inicio"},
-          {id:"tasks",   icon:"📋", label:"Tareas"},
-          {id:"calendar",icon:"📅", label:"Semana"},
-          {id:"money",   icon:"🐷", label:"Dinero"},
-          {id:"stats",   icon:"📊", label:"Logros"},
-          {id:"parent",  icon:"🔒", label:"Padres"},
+          {id:"home",       icon:"🏠",  label:"Inicio"},
+          {id:"tasks",      icon:"📋",  label:"Tareas"},
+          {id:"challenges", icon:"🏆",  label:"Retos"},
+          {id:"money",      icon:"🪙",  label:"Dinero"},
+          {id:"stats",      icon:"📊",  label:"Logros"},
+          {id:"parent",     icon:"🔒",  label:"Padres"},
         ].map(n=>(
           <button key={n.id} className="nav-btn bg-transparent border-none flex flex-col items-center gap-0.5 px-2 cursor-pointer"
             style={{ opacity: view===n.id ? 1 : 0.5 }}
